@@ -1,10 +1,15 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <SDL.h>
 
 bool is_running = false;
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
+uint32_t* color_buffer = NULL; //pointer to first element in 1D array of 4 byte color values
+
+int window_width = 800; // int just for code simplicity according to pikuma
+int window_height = 600; // could also be uint32_t etc
 
 // NOTE from : https://en.wikipedia.org/wiki/Void_type
 // The C syntax to declare a (non-variadic) function 
@@ -25,8 +30,8 @@ bool initialize_window(void)
 		NULL,
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
-		800,
-		600,
+		window_width,
+		window_height,
 		SDL_WINDOW_BORDERLESS
 	);
 
@@ -50,7 +55,7 @@ bool initialize_window(void)
 
 void setup(void)
 {
-	// TODO:
+	color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
 }
 
 void process_input(void)
@@ -86,6 +91,15 @@ void render(void)
 	SDL_RenderPresent(renderer); 
 }
 
+void destroy_window(void)
+{
+	// destroy things in reverse order of creating them
+	free(color_buffer);
+	SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(window);
+	SDL_Quit();
+}
+
 int main(int argc, char* argv[])
 {
 	is_running = initialize_window();
@@ -98,6 +112,8 @@ int main(int argc, char* argv[])
 		update();
 		render();
 	}
+
+	destroy_window();
 
 	return 0;
 }
