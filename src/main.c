@@ -4,9 +4,12 @@
 #include <SDL.h>
 
 bool is_running = false;
+
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
+
 uint32_t* color_buffer = NULL; //pointer to first element in 1D array of 4 byte color values
+SDL_Texture* color_buffer_texture = NULL;
 
 int window_width = 800; // int just for code simplicity according to pikuma
 int window_height = 600; // could also be uint32_t etc
@@ -55,7 +58,17 @@ bool initialize_window(void)
 
 void setup(void)
 {
+	// allocate the required memory in bytes to hold the color buffer
 	color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
+	
+	// Creating an SDL texture that is used to display the color buffer
+	color_buffer_texture = SDL_CreateTexture(
+		renderer,
+		SDL_PIXELFORMAT_ARGB8888,
+		SDL_TEXTUREACCESS_STREAMING,
+		window_width,
+		window_height
+	);
 }
 
 void process_input(void)
@@ -83,10 +96,38 @@ void update(void)
 	// TODO:
 }
 
+void render_color_buffer(void)
+{
+	SDL_UpdateTexture(
+		color_buffer_texture,
+		NULL,
+		color_buffer,
+		(int)(window_width * sizeof(uint32_t))
+	);
+	SDL_RenderCopy(renderer, color_buffer_texture, NULL, NULL);
+}
+
+void clear_color_buffer(uint32_t color)
+{
+	for (int y = 0; y < window_height; y++) 
+	{
+		for (int x = 0; x < window_width; x++)
+		{
+			// since color_buffer is 1D array
+			// a single for loop could have been used instead
+			// for the time being code just follows along with the course  
+			color_buffer[(window_width * y) + x] = color;
+		}
+	}
+}
+
 void render(void)
 {
-	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
+
+	render_color_buffer();
+	clear_color_buffer(0xFFFFFF00); // yellow (ARGB8888)
 
 	SDL_RenderPresent(renderer); 
 }
