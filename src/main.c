@@ -118,6 +118,30 @@ void draw_grid(void) // basically a copy of clear_color_buffer with modified ste
 	}
 }
 
+void draw_rect(int x, int y, int width, int height, uint32_t color) // yet again a similar to the clear color buffer function
+{
+	// pikuma's solution
+	for (int i = 0; i < width; i++)
+	{
+		for (int j = 0; j < height; j++)
+		{
+			int current_x = x + i;
+			int current_y = y + j;
+			color_buffer[(window_width * current_y) + current_x] = color;
+		}
+	}
+
+	// my solution - practically the same but without local variables inside the for loop
+	// also my solution colors the buffer per row while pikuma's per column
+	/*for (int h = y; h < y + height; h++) // for each row in rect
+	{
+		for (int w = x; w < x+width; w++) // for each column per row in rect
+		{
+			color_buffer[ (window_width*h) + w ] = color; // color row of rect 
+		}
+	} */
+}
+
 void render_color_buffer(void)
 {
 	SDL_UpdateTexture(
@@ -149,6 +173,8 @@ void render(void)
 	SDL_RenderClear(renderer);
 
 	draw_grid();
+
+	draw_rect(300, 200, 300, 150, 0xFFFF00FF);
 
 	render_color_buffer();
 	clear_color_buffer(0xFF000000); // black (ARGB8888)
