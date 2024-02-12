@@ -105,6 +105,19 @@ void update(void)
 	// TODO:
 }
 
+void draw_grid(void) // basically a copy of clear_color_buffer with modified step size
+{
+	for (int y = 0; y < window_height; y+=10)
+	{
+		for (int x = 0; x < window_width; x+=10)
+		{
+			//if (x % 10 == 0 || y % 10 == 0) { // for "real grid" - remember to revert step size to y++ and x++
+				color_buffer[(window_width * y) + x] = 0xFF333333;
+			//}
+		}
+	}
+}
+
 void render_color_buffer(void)
 {
 	SDL_UpdateTexture(
@@ -135,8 +148,10 @@ void render(void)
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 
+	draw_grid();
+
 	render_color_buffer();
-	clear_color_buffer(0xFFFFFF00); // yellow (ARGB8888)
+	clear_color_buffer(0xFF000000); // black (ARGB8888)
 
 	SDL_RenderPresent(renderer); 
 }
