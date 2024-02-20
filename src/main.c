@@ -5,6 +5,14 @@
 #include "display.h"
 #include "vector.h"
 
+// can't be used as vec3_t cube_points[N_POINTS] 
+// the compiler will complain, use define instead
+//const int N_POINTS = 9 * 9 * 9; 
+#define N_POINTS (9 * 9 * 9)
+
+//Declare an array of vectors/points
+vec3_t cube_points[N_POINTS]; // 9x9x9 cube
+
 bool is_running = false;
 
 void setup(void)
@@ -20,6 +28,22 @@ void setup(void)
 		window_width,
 		window_height
 	);
+
+	int point_count = 0;
+
+	// Start loading my array of vectors
+	// From -1 to 1 (in this 9x9x9 cube)
+	for (float x = -1; x <= 1; x += 0.25)
+	{
+		for (float y = -1; y <= 1; y += 0.25)
+		{
+			for (float z = -1; z <= 1; z += 0.25)
+			{
+				vec3_t new_point = { .x = x, .y = y, .z = z }; //vec3_t new_point = {x,y,z} // would be also valid , .x refers to struct's x variable
+				cube_points[point_count++] = new_point;
+			}
+		}
+	}
 }
 
 void process_input(void)
@@ -68,8 +92,6 @@ int main(int argc, char* argv[])
 	is_running = initialize_window();
 
 	setup();
-
-	vec3_t myvector = { 2.0, 3.0, -4.0 };
 
 	while(is_running)
 	{
