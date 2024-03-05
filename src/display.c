@@ -78,7 +78,7 @@ void draw_grid(void) // basically a copy of clear_color_buffer with modified ste
 
 void draw_pixel(int x, int y, uint32_t color)
 {
-	if (x < window_width && y < window_height) //only if valid index
+	if (x >=0 && x < window_width && y>=0 && y < window_height) //only if valid index
 	{
 		color_buffer[(window_width * y) + x] = color;
 	}
@@ -93,7 +93,8 @@ void draw_rect(int x, int y, int width, int height, uint32_t color) // yet again
 		{
 			int current_x = x + i;
 			int current_y = y + j;
-			color_buffer[(window_width * current_y) + current_x] = color;
+			//color_buffer[(window_width * current_y) + current_x] = color; // Line removed in orthographic projection lesson - still seems worse for performance to draw the draw pixel function instead. TODO: Investigate performance penalty of this change
+			draw_pixel(current_x, current_y, color);
 		}
 	}
 

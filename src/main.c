@@ -12,6 +12,9 @@
 
 //Declare an array of vectors/points
 vec3_t cube_points[N_POINTS]; // 9x9x9 cube
+vec2_t projected_points[N_POINTS];
+
+float fov_factor = 120;
 
 bool is_running = false;
 
@@ -66,20 +69,47 @@ void process_input(void)
 
 }
 
+//Function that receives a 3D vector and returns a project 2D point
+vec2_t project(vec3_t point)
+{
+	vec2_t projected_point = {
+		.x = (fov_factor * point.x),
+		.y = (fov_factor * point.y)
+	};
+
+	return projected_point;
+}
+
 void update(void)
 {
-	// TODO:
+	for (int i = 0; i < N_POINTS; i++)
+	{
+		vec3_t point = cube_points[i];
+
+		//project the current point
+		vec2_t projected_point = project(point);
+
+		//save the projected 2D Vector in the array of projected points
+		projected_points[i] = projected_point;
+	}
 }
 
 void render(void)
 {
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	SDL_RenderClear(renderer);
-
 	draw_grid();
 
-	draw_pixel(20, 20, 0xFFFFFF00);
-	draw_rect(300, 200, 300, 150, 0xFFFF00FF);
+	//Loop all projected points and render them
+	for (int i = 0; i < N_POINTS; i++)
+	{
+		vec2_t projected_point = projected_points[i];
+		draw_rect(
+			projected_point.x + (window_width/2),
+			projected_point.y + (window_height/2),
+			4,
+			4,
+			0xFFFFFF00 //yellow (ARGB8888)
+		);
+	}
 
 	render_color_buffer();
 	clear_color_buffer(0xFF000000); // black (ARGB8888)
