@@ -5,6 +5,9 @@
 #include <stdbool.h>
 #include <SDL.h>
 
+#define FPS 30
+#define FRAME_TARGET_TIME (1000 / FPS)
+
 // only declaration
 // The extern keyword means "declare without defining". 
 // From : https://stackoverflow.com/a/1433387
