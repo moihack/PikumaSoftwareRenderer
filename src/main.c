@@ -86,9 +86,35 @@ vec2_t project(vec3_t point)
 
 void update(void)
 {
-	// wait for frame time to pass before updating cube rotation again
-	while (!SDL_TICKS_PASSED(SDL_GetTicks(), previous_frame_time + FRAME_TARGET_TIME));
+	// old way of waiting for specific time consumed more CPU
+	// just kept in place for comparison with new way (SDL_Delay)
+	// while (!SDL_TICKS_PASSED(SDL_GetTicks(), previous_frame_time + FRAME_TARGET_TIME));
 
+	// Comment by Darko Draskovic:
+	// (SDL_GetTicks() - previous_frame_time) will always be positive, 
+	// so the range of time_to_wait is (-infinity, FRAME_TARGET_TIME]
+	// FRAME_TARGET_TIME, is the case if the update took 0 seconds.
+	// Hence the check "time_to_wait <= FRAME_TARGET_TIME"
+	// inside the if statement below is redundant.
+	// 
+	// However according to Pikuma's reply:
+	// Most applications usually have a capped maximum value of delta_time. 
+	// One of the reasons for this is if we try to debug our program. 
+	// Pausing the execution line by line, we don't want the delta_time 
+	// (time it took from the previous frame to the next) 
+	// to be huge and mess up our animation, 
+	// making our object jump several pixels for example.
+	// But concludes agreeing that: 
+	// "in this case the condition checking if time_to_wait
+	//  is less than FRAME_TARGET_TIME is mostly useless"
+	
+	// Wait some time until we reach the target frame time in milliseconds
+	int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
+	
+	// Only delay execution if we are running too fast
+	if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
+		SDL_Delay(time_to_wait);
+	}
 	previous_frame_time = SDL_GetTicks();
 
 	cube_rotation.x += 0.01;
