@@ -75,3 +75,11 @@ void load_cube_mesh_data(void)
     //mesh.faces = cube_faces;
     //mesh.vertices = cube_vertices;
 }
+
+void load_obj_file_data(char* filename)
+{
+    // TODO:
+    // Read the contents of the .obj file
+    // and load the vertices and faces in
+    // our mesh.vertices and mesh.faces
+}
