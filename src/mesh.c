@@ -1,4 +1,5 @@
 #include <stdio.h> // for NULL
+#include <string.h>
 #include "array.h"
 #include "mesh.h"
 
@@ -78,8 +79,48 @@ void load_cube_mesh_data(void)
 
 void load_obj_file_data(char* filename)
 {
-    // TODO:
-    // Read the contents of the .obj file
-    // and load the vertices and faces in
-    // our mesh.vertices and mesh.faces
+    FILE* file;
+    file = fopen(filename, "r");
+
+    char line[1024];
+
+    while (fgets(line, 1024, file))
+    {
+        // Info regarding .obj line format : https://en.wikipedia.org/wiki/Wavefront_.obj_file
+        // reading this will clear things up on why we compare for "v ", "f " etc.
+
+        // Vertex information
+        if (strncmp(line, "v ", 2) == 0)
+        {
+            vec3_t vertex;
+            sscanf(line, "v %f %f %f", &vertex.x, &vertex.y, &vertex.z);
+            array_push(mesh.vertices, vertex);
+        }
+        // Face information
+        if (strncmp(line, "f ", 2) == 0)
+        {
+            int vertex_indices[3];
+            int texture_indices[3]; // currently unused, but parsed anyway
+            int normal_indices[3]; // currently unused, but parsed anyway
+            
+            sscanf(
+                line, "f %d/%d/%d %d/%d/%d %d/%d/%d",
+                &vertex_indices[0], &texture_indices[0], &normal_indices[0],
+                &vertex_indices[1], &texture_indices[1], &normal_indices[1], 
+                &vertex_indices[2], &texture_indices[2], &normal_indices[2]
+            );
+            face_t face = {
+                .a = vertex_indices[0],
+                .b = vertex_indices[1],
+                .c = vertex_indices[2]
+            };
+            
+            // for .obj files teapot & bunny that use a different line format
+            // comment sscanf above and uncomment lines below
+            //face_t face;
+            //sscanf(line, "f %d %d %d", &face.a, &face.b, &face.c);
+            
+            array_push(mesh.faces, face);
+        }
+    }
 }
