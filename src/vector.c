@@ -1,6 +1,18 @@
 #include <math.h>
 #include "vector.h"
 
+// Implementations of Vector 2D functions
+float vec2_length(vec2_t v)
+{
+	return sqrt(v.x * v.x + v.y * v.y); // simple Pythagorean theorem formula
+}
+
+// Implementations of Vector 3D functions
+float vec3_length(vec3_t v)
+{
+	return sqrt(v.x * v.x + v.y * v.y + v.z * v.z); // Pythagorean theorem with just an extra dimension (z)
+}
+
 // NOTE : hopefully I copied all these correctly, otherwise happy bug hunting :P
 vec3_t vec3_rotate_x(vec3_t v, float angle)
 {
