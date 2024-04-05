@@ -94,6 +94,7 @@ vec3_t vec3_div(vec3_t v, float factor)
 	return result;
 }
 
+// Remember order of arguments matters for cross product direction
 vec3_t vec3_cross(vec3_t a, vec3_t b)
 {
 	vec3_t result = {
