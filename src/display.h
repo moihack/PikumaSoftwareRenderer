@@ -8,6 +8,8 @@
 #define FPS 30
 #define FRAME_TARGET_TIME (1000 / FPS)
 
+// typedef uint32_t color_t; // Pikuma won't be using a typedef for uint32_t color parameters in various functions but we could if we wanted to in the future
+
 enum cull_method
 {
 	CULL_NONE,
