@@ -47,9 +47,44 @@ void fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int x2, int y2, u
 	}
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Draw a filled a triangle with a flat top
+///////////////////////////////////////////////////////////////////////////////
+//
+//  (x0,y0)------(x1,y1)
+//      \         /
+//       \       /
+//        \     /
+//         \   /
+//          \ /
+//        (x2,y2)
+//
+///////////////////////////////////////////////////////////////////////////////
 void fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
 {
+	// also see comments in fill_flat_bottom_triangle
+	// esentially this function is a modified copy of fill_flat_bottom_triangle
+	// where the changes are mainly in the for loop y-- instead of y++, -= instead of += etc
+	// 
+	// Find the two slopes (two triangle legs) - we still need to find the inverse slopes
+	float inv_slope1 = (float)(x2 - x0) / (y2 - y0);
+	float inv_slope2 = (float)(x2 - x1) / (y2 - y1);
 
+	// Start x_start and x_end from the bottom vertex (x2,y2)
+	float x_start = x2;
+	float x_end = x2;
+
+	// Loop all the scanlines from bottom to top - y0 equals y1, so either one works (see comment/figure above signature)
+	for (int y = y2; y >= y0; y--)
+	{
+		// we could also use another for loop from x_start to x_end 
+		// and use draw_pixel instead, perhaps leading to faster code
+		// as the draw_line does many extra calculations apart from coloring
+		// but let's leave it with draw_line for now for cleaner code
+		draw_line(x_start, y, x_end, y, color);
+		x_start -= inv_slope1;
+		x_end -= inv_slope2;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
