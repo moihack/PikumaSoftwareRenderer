@@ -1,3 +1,4 @@
+#include "display.h"
 #include "triangle.h"
 
 void int_swap(int* a, int* b)
@@ -7,9 +8,43 @@ void int_swap(int* a, int* b)
 	*b = tmp;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Draw a filled a triangle with a flat bottom
+///////////////////////////////////////////////////////////////////////////////
+//
+//        (x0,y0)
+//          / \
+//         /   \
+//        /     \
+//       /       \
+//      /         \
+//  (x1,y1)------(x2,y2)
+//
+///////////////////////////////////////////////////////////////////////////////
 void fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
 {
-	
+	// Find the two slopes (two triangle legs)
+	// We need to find the inverse of the slope
+	// Normal slope is Dy/Dx (y1 - y0) / (x1 - x0)
+	// but inverted slope is Dx/Dy
+	float inv_slope1 = (float)(x1 - x0) / (y1 - y0);
+	float inv_slope2 = (float)(x2 - x0) / (y2 - y0);
+
+	// Start x_start and x_end from the top vertex (x0,y0)
+	float x_start = x0;
+	float x_end = x0;
+
+	// Loop all the scanlines from top to bottom - y2 equals y1, so either one works (see comment/figure above signature)
+	for (int y = y0; y <= y2; y++)
+	{
+		// we could also use another for loop from x_start to x_end 
+		// and use draw_pixel instead, perhaps leading to faster code
+		// as the draw_line does many extra calculations apart from coloring
+		// but let's leave it with draw_line for now for cleaner code
+		draw_line(x_start, y, x_end, y, color); 
+		x_start += inv_slope1;
+		x_end += inv_slope2;		
+	}
 }
 
 void fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
@@ -64,8 +99,8 @@ void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32
 	int Mx = ((float)((x2 - x0) * (y1 - y0)) / (float) (y2 - y0)) + x0;
 
 	// Draw flat-bottom triangle
-	fill_flat_bottom_triangle(x0, y0, x1, y1, Mx, My);
+	fill_flat_bottom_triangle(x0, y0, x1, y1, Mx, My, color);
 
 	// Draw flat-top triangle
-	fill_flat_top_triangle(x1, y1, Mx, My, x2, y2);
+	fill_flat_top_triangle(x1, y1, Mx, My, x2, y2, color);
 }
