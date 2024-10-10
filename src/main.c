@@ -19,6 +19,10 @@ int previous_frame_time = 0;
 
 void setup(void)
 {
+	// Initialize render mode and triangle culling method
+	render_method = RENDER_WIRE;
+	cull_method = CULL_BACKFACE;
+
 	// allocate the required memory in bytes to hold the color buffer
 	color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
 	
@@ -47,9 +51,19 @@ void process_input(void)
 			break;
 		case SDL_KEYDOWN:
 			if (event.key.keysym.sym == SDLK_ESCAPE)
-			{
 				is_running = false;
-			}
+			if (event.key.keysym.sym == SDLK_1)
+				render_method = RENDER_WIRE_VERTEX;
+			if (event.key.keysym.sym == SDLK_2)
+				render_method = RENDER_WIRE;
+			if (event.key.keysym.sym == SDLK_3)
+				render_method = RENDER_FILL_TRIANGLE;
+			if (event.key.keysym.sym == SDLK_4)
+				render_method = RENDER_FILL_TRIANGLE_WIRE;
+			if (event.key.keysym.sym == SDLK_c)
+				cull_method = CULL_BACKFACE;
+			if (event.key.keysym.sym == SDLK_d)
+				cull_method = CULL_NONE;
 			break;
 	}
 
@@ -139,54 +153,56 @@ void update(void)
 			transformed_vertices[j] = transformed_vertex;
 		}
 
-		// Check backface culling
-
-		// Triangle ACB in clocwise order (CW)
-		vec3_t vector_a = transformed_vertices[0]; /*   A   */
-		vec3_t vector_b = transformed_vertices[1]; /*  / \  */
-		vec3_t vector_c = transformed_vertices[2]; /* C---B */
-
-		vec3_t vector_ab = vec3_sub(vector_b, vector_a);
-		vec3_t vector_ac = vec3_sub(vector_c, vector_a);
-		vec3_normalize(&vector_ab);
-		vec3_normalize(&vector_ac);
-
-		// Compute the face normal (using cross product to find perpendicular)
-		// Remember order of arguments matters for cross product direction
-		vec3_t normal = vec3_cross(vector_ab, vector_ac);
-
-		// Normalize the face normal vector
-		// normalized vector = vector with length 1 (hence .x , .y between 0.0 and 1.0)
-		// face normal vector = just a perpendicular vector to a face/triangle surface
-		vec3_normalize(&normal);
-
-		// Find the vector between a point in the triangle and the camera origin
-		vec3_t camera_ray = vec3_sub(camera_position, vector_a);
-
-		// Calculate how aligned the camera ray is with the face normal using dot product
-		float dot_normal_camera = vec3_dot(camera_ray, normal); // order does not matter for dot product, like it does in cross product
-
-		// Bypass the triangles that are looking away from the camera
-		if (dot_normal_camera < 0)
+		// Backface culling test to see if the current face should be projected
+		if (cull_method == CULL_BACKFACE)
 		{
-			continue;
-		}
+			// Triangle ACB in clocwise order (CW)
+			vec3_t vector_a = transformed_vertices[0]; /*   A   */
+			vec3_t vector_b = transformed_vertices[1]; /*  / \  */
+			vec3_t vector_c = transformed_vertices[2]; /* C---B */
 
-		// NOTE : Some small observations after messing around with the 
-		// if statement above and cross product result.
-		// 
-		// in case you invert the if above to (dot_normal_camera > 0)
-		// then you can "look inside" the meshes, pretty much like when normals
-		// are inverted in an engine like Unreal.
-		// In that case changing the cross product arguments order, corrects back that issue
-		// 
-		// So this indeed showcases that order indeed matters for cross product,
-		// as it is then used in dot product operation to determine face-camera alignment.
-		// 
-		// One more way to "invert" the normals is to multiply cross product * -1.0
-		// achieving the same effect of "looking inside" the meshes.
-		// In that case the if statement above has to be inverted (dot_normal_camera > 0)
-		// so that the rendering is correct again.
+			vec3_t vector_ab = vec3_sub(vector_b, vector_a);
+			vec3_t vector_ac = vec3_sub(vector_c, vector_a);
+			vec3_normalize(&vector_ab);
+			vec3_normalize(&vector_ac);
+
+			// Compute the face normal (using cross product to find perpendicular)
+			// Remember order of arguments matters for cross product direction
+			vec3_t normal = vec3_cross(vector_ab, vector_ac);
+
+			// Normalize the face normal vector
+			// normalized vector = vector with length 1 (hence .x , .y between 0.0 and 1.0)
+			// face normal vector = just a perpendicular vector to a face/triangle surface
+			vec3_normalize(&normal);
+
+			// Find the vector between a point in the triangle and the camera origin
+			vec3_t camera_ray = vec3_sub(camera_position, vector_a);
+
+			// Calculate how aligned the camera ray is with the face normal using dot product
+			float dot_normal_camera = vec3_dot(camera_ray, normal); // order does not matter for dot product, like it does in cross product
+
+			// Bypass the triangles that are looking away from the camera
+			if (dot_normal_camera < 0)
+			{
+				continue;
+			}
+
+			// NOTE : Some small observations after messing around with the 
+			// if statement above and cross product result.
+			// 
+			// in case you invert the if above to (dot_normal_camera > 0)
+			// then you can "look inside" the meshes, pretty much like when normals
+			// are inverted in an engine like Unreal.
+			// In that case changing the cross product arguments order, corrects back that issue
+			// 
+			// So this indeed showcases that order indeed matters for cross product,
+			// as it is then used in dot product operation to determine face-camera alignment.
+			// 
+			// One more way to "invert" the normals is to multiply cross product * -1.0
+			// achieving the same effect of "looking inside" the meshes.
+			// In that case the if statement above has to be inverted (dot_normal_camera > 0)
+			// so that the rendering is correct again.
+		}
 
 		triangle_t projected_triangle;
 
@@ -218,26 +234,38 @@ void render(void)
 	{
 		triangle_t triangle = triangles_to_render[i];
 
-		// Draw vertex points
-		//draw_rect(triangle.points[0].x, triangle.points[0].y, 3, 3, 0xFFFFFF00); //yellow (ARGB8888)
-		//draw_rect(triangle.points[1].x, triangle.points[1].y, 3, 3, 0xFFFFFF00);
-		//draw_rect(triangle.points[2].x, triangle.points[2].y, 3, 3, 0xFFFFFF00);
+		
 	
 		// Draw filled triangle
-		draw_filled_triangle(
-			triangle.points[0].x, triangle.points[0].y, // vertex A
-			triangle.points[1].x, triangle.points[1].y, // vertex B
-			triangle.points[2].x, triangle.points[2].y, // vertex C
-			0xFFFFFFFF
+		if (render_method == RENDER_FILL_TRIANGLE || render_method == RENDER_FILL_TRIANGLE_WIRE)
+		{
+			draw_filled_triangle(
+				triangle.points[0].x, triangle.points[0].y, // vertex A
+				triangle.points[1].x, triangle.points[1].y, // vertex B
+				triangle.points[2].x, triangle.points[2].y, // vertex C
+				0xFF555555
 			);
+		}
 
-		// Draw unfilled triangle (wireframe)
-		draw_triangle(
-			triangle.points[0].x, triangle.points[0].y, // vertex A
-			triangle.points[1].x, triangle.points[1].y, // vertex B
-			triangle.points[2].x, triangle.points[2].y, // vertex C
-			0xFF000000
-		);
+		// Draw triangle wireframe
+		if (render_method == RENDER_WIRE || render_method == RENDER_WIRE_VERTEX || render_method == RENDER_FILL_TRIANGLE_WIRE)
+		{
+			draw_triangle(
+				triangle.points[0].x, triangle.points[0].y, // vertex A
+				triangle.points[1].x, triangle.points[1].y, // vertex B
+				triangle.points[2].x, triangle.points[2].y, // vertex C
+				0xFFFFFFFF
+			);
+		}
+
+		// Draw triangle vertex points
+		if (render_method == RENDER_WIRE_VERTEX)
+		{
+			// 6x6 size and -3 in x,y just for centering the vertices in the correct position for viewing
+			draw_rect(triangle.points[0].x - 3, triangle.points[0].y - 3, 6, 6, 0xFFFFFF00); //yellow (ARGB8888)
+			draw_rect(triangle.points[1].x - 3, triangle.points[1].y - 3, 6, 6, 0xFFFFFF00);
+			draw_rect(triangle.points[2].x - 3, triangle.points[2].y - 3, 6, 6, 0xFFFFFF00);
+		}
 	}
 
 	// Clear the array of triangles to render every frame loop
