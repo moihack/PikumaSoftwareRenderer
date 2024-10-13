@@ -14,7 +14,21 @@ enum cull_method
 {
 	CULL_NONE,
 	CULL_BACKFACE
-} cull_method;
+} extern cull_method; // read extern comment below
+
+/* alternatively simply declare the enum
+enum cull_method
+{
+	CULL_NONE,
+	CULL_BACKFACE
+};
+and then write separately (in display.h - this file):
+extern enum render_method render_method;
+then continue defining in display.c
+
+perhaps this style fits better the current extern variables in display.h/.c
+but wanted to showcase that the current implementation is valid syntax as well
+*/
 
 enum render_method
 {
@@ -22,7 +36,7 @@ enum render_method
 	RENDER_WIRE_VERTEX,
 	RENDER_FILL_TRIANGLE,
 	RENDER_FILL_TRIANGLE_WIRE
-} render_method;
+} extern render_method; // read extern comment below
 
 // only declaration
 // The extern keyword means "declare without defining". 
@@ -39,7 +53,7 @@ enum render_method
 // For each program, one source file (and only one source file) defines the variable. 
 // Similarly, one header file (and only one header file) should declare the variable. 
 // The header file is crucial; it enables cross-checking between
-// independent TUs (translation units — think source files) and ensures consistency.
+// independent TUs (translation units - think source files) and ensures consistency.
 
 // Example: in our case global vars are declared as extern in display.h (this file),
 // then defined in display.c and can be referenced in main.c (and other .c files) by including display.h
