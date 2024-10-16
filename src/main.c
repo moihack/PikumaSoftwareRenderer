@@ -160,6 +160,9 @@ void update(void)
 			// TODO: world_matrix can be created outside the for loop
 			// so not all mat_mul functions get calculated each loop
 			// however for the sake of closely following the course let's keep it here
+			
+			// Oder matters: First scale, then rotate, then translate
+			// [T]*[R]*[S]*v (expression must be read from right to left)
 			mat4_t world_matrix = mat4_identity();
 			world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
 			world_matrix = mat4_mul_mat4(rotation_matrix_z, world_matrix);
