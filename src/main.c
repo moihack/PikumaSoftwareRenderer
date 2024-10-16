@@ -122,8 +122,8 @@ void update(void)
 	mesh.rotation.x += 0.01;
 	mesh.rotation.y += 0.01;
 	mesh.rotation.z += 0.01;
-	//mesh.scale.x += 0.002;
-	//mesh.scale.y += 0.001;
+	mesh.scale.x += 0.002;
+	mesh.scale.y += 0.001;
 	mesh.translation.x += 0.01;
 	mesh.translation.z = 5.0;
 	
@@ -156,14 +156,19 @@ void update(void)
 		{
 			vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
 
-			// Use a matrix to scale and translate our original vertex
-			// matrix multiplcation is not commutative (A*B /= B*A)
-			// so order of transformations matters! it must be scale, rotation and then translation
-			transformed_vertex = mat4_mul_vec4(scale_matrix, transformed_vertex);
-			transformed_vertex = mat4_mul_vec4(rotation_matrix_x, transformed_vertex);
-			transformed_vertex = mat4_mul_vec4(rotation_matrix_y, transformed_vertex);
-			transformed_vertex = mat4_mul_vec4(rotation_matrix_z, transformed_vertex);
-			transformed_vertex = mat4_mul_vec4(translation_matrix, transformed_vertex);
+			// Create a World Matrix combining scale, rotation and translation matrices
+			// TODO: world_matrix can be created outside the for loop
+			// so not all mat_mul functions get calculated each loop
+			// however for the sake of closely following the course let's keep it here
+			mat4_t world_matrix = mat4_identity();
+			world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
+			world_matrix = mat4_mul_mat4(rotation_matrix_z, world_matrix);
+			world_matrix = mat4_mul_mat4(rotation_matrix_y, world_matrix);
+			world_matrix = mat4_mul_mat4(rotation_matrix_x, world_matrix);
+			world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
+			
+			// Multiply the world matrix by the original vector
+			transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
 			
 			// Save transformed vertex in the array of transformed vertices
 			transformed_vertices[j] = transformed_vertex;
