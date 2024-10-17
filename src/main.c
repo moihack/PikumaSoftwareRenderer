@@ -11,9 +11,9 @@
 // Array of triangles that should be rendered frame by frame
 triangle_t* triangles_to_render = NULL;
 
-vec3_t camera_position = { 0, 0 , 0 };
-
-float fov_factor = 640;
+// Global variables for execution status and game loop
+vec3_t camera_position = { .x = 0, .y = 0 , .z = 0 };
+mat4_t proj_matrix;
 
 bool is_running = false;
 int previous_frame_time = 0;
@@ -36,6 +36,13 @@ void setup(void)
 		window_height
 	);
 
+	// Initialize the perspective projection matrix
+	float fov = 3.141592 / 3.0; // fov value in radians, not degrees - 60 degrees used
+	float aspect = (float)window_height / (float)window_width;
+	float znear = 0.1;
+	float zfar = 100.0;
+	proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
+	
 	// Loads the cube values in the mesh data structure
 	load_cube_mesh_data();
 	//load_obj_file_data("./assets/cube.obj");
@@ -69,17 +76,6 @@ void process_input(void)
 			break;
 	}
 
-}
-
-//Function that receives a 3D vector and returns a project 2D point
-vec2_t project(vec3_t point)
-{
-	vec2_t projected_point = {
-		.x = (fov_factor * point.x) / point.z,
-		.y = (fov_factor * point.y) / point.z
-	};
-
-	return projected_point;
 }
 
 void update(void)
@@ -120,11 +116,11 @@ void update(void)
 
 	// Change the mesh scale/rotation values per animation frame
 	mesh.rotation.x += 0.01;
-	mesh.rotation.y += 0.01;
-	mesh.rotation.z += 0.01;
-	mesh.scale.x += 0.002;
-	mesh.scale.y += 0.001;
-	mesh.translation.x += 0.01;
+	//mesh.rotation.y += 0.01;
+	//mesh.rotation.z += 0.01;
+	//mesh.scale.x += 0.002;
+	//mesh.scale.y += 0.001;
+	//mesh.translation.x += 0.01;
 	mesh.translation.z = 5.0;
 	
 	// Create a scale, rotation and translation matrix that will be used to multiply the mesh vertices
@@ -228,17 +224,23 @@ void update(void)
 			// so that the rendering is correct again.
 		}
 
-		vec2_t projected_points[3];
+		vec4_t projected_points[3];
 
 		// Loop all three vertices (of a face/triangle) to perform the projection
 		for (int j = 0; j <3; j++) 
 		{
 			//project the current vertex
-			projected_points[j] = project(vec3_from_vec4(transformed_vertices[j]));
+			projected_points[j] = mat4_mul_vec4_project(proj_matrix, transformed_vertices[j]);
 
-			// Scale and translate the projected points to the middle of the screen
-			projected_points[j].x += (window_width / 2);
-			projected_points[j].y += (window_height / 2);
+			// Order of transformations still matters, so scale first and translate last
+			
+			// Scale into the view
+			projected_points[j].x *= (window_width / 2.0);
+			projected_points[j].y *= (window_height / 2.0);
+			
+			// Translate the projected points to the middle of the screen
+			projected_points[j].x += (window_width / 2.0);
+			projected_points[j].y += (window_height / 2.0);
 		}
 
 		// Calculate the average depth for each face based on the vertices Z value after transformation
