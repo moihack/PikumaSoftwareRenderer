@@ -116,9 +116,9 @@ void update(void)
 	triangles_to_render = NULL;
 
 	// Change the mesh scale/rotation values per animation frame
-	mesh.rotation.x += 0.01;
-	mesh.rotation.y += 0.01;
-	mesh.rotation.z += 0.01;
+	mesh.rotation.x += 0.05;
+	//mesh.rotation.y += 0.01;
+	//mesh.rotation.z += 0.01;
 	//mesh.scale.x += 0.002;
 	//mesh.scale.y += 0.001;
 	//mesh.translation.x += 0.01;
@@ -244,6 +244,9 @@ void update(void)
 			projected_points[j].x *= (window_width / 2.0);
 			projected_points[j].y *= (window_height / 2.0);
 			
+			// Invert the y values to account for flipped screen y coordinate
+			projected_points[j].y *= -1;
+			
 			// Translate the projected points to the middle of the screen
 			projected_points[j].x += (window_width / 2.0);
 			projected_points[j].y += (window_height / 2.0);
@@ -263,6 +266,11 @@ void update(void)
 
 		// Calculate the triangle color based on light angle
 		uint32_t triangle_color = light_apply_intensity(mesh_face.color, light_intensity_factor);
+		
+		// TODO: try to implement smooth (Gouraud) shading in the future
+		// we can read vertex normals needed for smooth shading from .obj file (lines starting with vn)
+		// we can modify the draw_filled_triangle and fill_flat_* functions
+		// to call draw_line by interpolating the color accordingly
 		
 		triangle_t projected_triangle = {
 			.points = {
