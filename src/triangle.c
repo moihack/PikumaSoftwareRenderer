@@ -204,6 +204,7 @@ void draw_textured_triangle(
 		float_swap(&v0, &v1);
 	}
 
+	//////////////////////////////////////////////////////
 	// Render the upper part of the triangle (flat-bottom)
 	//////////////////////////////////////////////////////
 	float inv_slope1 = 0;
@@ -228,7 +229,37 @@ void draw_textured_triangle(
 
 			for (int x = x_start; x < x_end; x++)
 			{
-				draw_pixel(x, y, 0xFFFF00FF);
+				draw_pixel(x, y, (x % 2 == 0 && y % 2 == 0) ? 0xFFFF00FF : 0x00000000);
+			}
+		}
+	}
+
+	//////////////////////////////////////////////////////
+	// Render the bottom part of the triangle (flat-top)
+	//////////////////////////////////////////////////////
+	inv_slope1 = 0;
+	inv_slope2 = 0;
+	if ((y2 - y1) != 0) inv_slope1 = (float)(x2 - x1) / abs(y2 - y1); // why abs here?
+	if ((y2 - y0) != 0) inv_slope2 = (float)(x2 - x0) / abs(y2 - y0);
+
+	if ((y2 - y1) != 0) // small fix for lines drawing in flat top triangles
+	{
+		for (int y = y1; y <= y2; y++)
+		{
+			int x_start = x1 + ((y - y1) * inv_slope1);
+			int x_end = x0 + ((y - y0) * inv_slope2);
+
+			// ensure the second for loop will always run, 
+			// otherwise some faces will not get rendered
+			// loop won't have run to draw_pixels, so they stayed black
+			if (x_end < x_start) // this can happen due to transformations applied
+			{
+				int_swap(&x_start, &x_end); // swap if x_start is to the right of x_end
+			}
+
+			for (int x = x_start; x < x_end; x++)
+			{
+				draw_pixel(x, y, (x % 2 == 0 && y % 2 == 0) ? 0xFFFF00FF : 0x00000000);
 			}
 		}
 	}
