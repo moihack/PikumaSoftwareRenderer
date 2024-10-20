@@ -1,12 +1,6 @@
 #include "display.h"
 #include "triangle.h"
-
-void int_swap(int* a, int* b)
-{
-	int tmp = *a;
-	*a = *b;
-	*b = tmp;
-}
+#include "swap.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Draw a filled a triangle with a flat bottom
@@ -112,7 +106,7 @@ void fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint
 ///////////////////////////////////////////////////////////////////////////////
 void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
 {
-	// We need to sort the vertices by y-coordinate ascnding (y0 < y1 < y2)
+	// We need to sort the vertices by y-coordinate ascending (y0 < y1 < y2)
 	if (y0 > y1)
 	{
 		int_swap(&y0, &y1);
@@ -177,12 +171,65 @@ void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32
 //
 ///////////////////////////////////////////////////////////////////////////////
 void draw_textured_triangle(
-	int x0, int y0, float u0, float v0, 
-	int x1, int y1, float u1, float v1, 
+	int x0, int y0, float u0, float v0,
+	int x1, int y1, float u1, float v1,
 	int x2, int y2, float u2, float v2,
 	uint32_t* texture)
 {
-	// TODO:
-	// Loop all the pixels of the triangle and draw them based on the
-	// texel color that comes from the source texture array.
+	// The function body that follows is basically a combination of draw_filled_triangle
+	// and fill_flat_top_triangle and fillat_flat_bottom_triangle functions.
+	// It's not a 1:1 copy of these functions and does not use the midpoint formula making it more complex.
+
+	// We need to sort the vertices by y-coordinate ascending (y0 < y1 < y2)
+	// Note this time we also "carry" the uv per point (float_swap)
+	if (y0 > y1)
+	{
+		int_swap(&y0, &y1);
+		int_swap(&x0, &x1);
+		float_swap(&u0, &u1);
+		float_swap(&v0, &v1);
+	}
+	if (y1 > y2)
+	{
+		int_swap(&y1, &y2);
+		int_swap(&x1, &x2);
+		float_swap(&u1, &u2);
+		float_swap(&v1, &v2);
+	}
+	if (y0 > y1) // not a typo since order may have changed in (y1 > y2), so we have to check (y0 > y1) again
+	{
+		int_swap(&y0, &y1);
+		int_swap(&x0, &x1);
+		float_swap(&u0, &u1);
+		float_swap(&v0, &v1);
+	}
+
+	// Render the upper part of the triangle (flat-bottom)
+	//////////////////////////////////////////////////////
+	float inv_slope1 = 0;
+	float inv_slope2 = 0;
+	if ((y1 - y0) != 0) inv_slope1 = (float)(x1 - x0) / abs(y1 - y0); // why abs here?
+	if ((y2 - y0) != 0) inv_slope2 = (float)(x2 - x0) / abs(y2 - y0);
+
+	if ((y1 - y0) != 0) // small fix for lines drawing in flat top triangles
+	{
+		for (int y = y0; y <= y1; y++)
+		{
+			int x_start = x1 + ((y - y1) * inv_slope1);
+			int x_end = x0 + ((y - y0) * inv_slope2);
+
+			// ensure the second for loop will always run, 
+			// otherwise some faces will not get rendered
+			// loop won't have run to draw_pixels, so they stayed black
+			if (x_end < x_start) // this can happen due to transformations applied
+			{
+				int_swap(&x_start, &x_end); // swap if x_start is to the right of x_end
+			}
+
+			for (int x = x_start; x < x_end; x++)
+			{
+				draw_pixel(x, y, 0xFFFF00FF);
+			}
+		}
+	}
 }
