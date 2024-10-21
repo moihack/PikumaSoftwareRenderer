@@ -26,6 +26,13 @@ typedef struct {
 // However I do not recall moving the function here in any of the lessons.
 // For the time being I'll keep the draw_triangle function in display.h/.c
 void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
+
+void draw_texel(
+	int x, int y, uint32_t* texture, // the pixel values I want to paint and the texture to pick the color from
+	vec2_t point_a, vec2_t point_b, vec2_t point_c, // triangle vertices 
+	float u0, float v0, float u1, float v1, float u2, float v2 // uv coordinates for each triangle vertex
+);
+
 void draw_textured_triangle(
 	int x0, int y0, float u0, float v0, // vertex A
 	int x1, int y1, float u1, float v1, // vertex B

@@ -1,4 +1,4 @@
-#include "display.h"
+﻿#include "display.h"
 #include "triangle.h"
 #include "swap.h"
 
@@ -151,6 +151,94 @@ void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Return the barycentric weights alpha, beta, and gamma for point p
+///////////////////////////////////////////////////////////////////////////////
+//
+//         (B)
+//         /|\
+//        / | \
+//       /  |  \
+//      /  (P)  \
+//     /  /   \  \
+//    / /       \ \
+//   //           \\
+//  (A)------------(C)
+//
+///////////////////////////////////////////////////////////////////////////////
+vec3_t barycentric_weights(vec2_t a, vec2_t b, vec2_t c, vec2_t p) {
+	// Find the vectors between the vertices ABC and point p
+	vec2_t ac = vec2_sub(c, a);
+	vec2_t ab = vec2_sub(b, a);
+	vec2_t ap = vec2_sub(p, a);
+	vec2_t pc = vec2_sub(c, p);
+	vec2_t pb = vec2_sub(b, p);
+
+	// Compute the area of the full parallegram/triangle ABC using "2D cross product"
+	// NOTE: Cross product is actually not defined for 2d vectors
+	// As the result of the cross product of 2 vectors 
+	// is another vector that is perpendicular to the other 2
+
+	// Taken from Pikuma's reply in a discussion
+	// "2D cross-product" formula.
+	// it's the magnitude of the z-component of that arrow that is perpendicular
+	// between two 2D vectors. Since our source vectors are 2D, 
+	// we can imagine the arrow pointing outside (or inside) the monitor, for example.
+	// When we take the cross - product between 2D vectors, that is the formula that you'll see. 
+	// It's just the magnitude of the 'imaginary' arrow that would be perpendicular to those two 2D vectors, 
+	// and it's also the area of the parallelogram that we just spoke.
+
+	// There was some ambiguity during "Barycentric Weights (α, β, γ)" lesson at around 14:45
+	// about positive-negative cross product magnitude/length (but magnitude/length is always a positive scalar).
+	// The formula at the slides used || (absolute value) so there shouldn't be an issue with cross products vectors order.
+	// However in the code the 2d cross product formula is used without absolute value,
+	// hence order of vectors start-end (ac != ca) matters
+	float area_parallelogram_abc = (ac.x * ab.y - ac.y * ab.x); // || AC x AB ||
+
+	// Alpha is the area of the small parallelogram/triangle PBC divided by the area of the full parallelogram/triangle ABC
+	float alpha = (pc.x * pb.y - pc.y * pb.x) / area_parallelogram_abc;
+
+	// Beta is the area of the small parallelogram/triangle APC divided by the area of the full parallelogram/triangle ABC
+	float beta = (ac.x * ap.y - ac.y * ap.x) / area_parallelogram_abc;
+
+	// Weight gamma is easily found since barycentric coordinates always add up to 1.0
+	float gamma = 1 - alpha - beta;
+
+	vec3_t weights = { alpha, beta, gamma };
+	return weights;
+}
+
+// Function to draw the textured pixel at position x and y using interpolation
+void draw_texel(
+	int x, int y, uint32_t* texture, // the pixel values I want to paint and the texture to pick the color from
+	vec2_t point_a, vec2_t point_b, vec2_t point_c, // triangle vertices 
+	float u0, float v0, float u1, float v1, float u2, float v2 // uv coordinates for each triangle vertex
+) {
+	vec2_t point_p = { x, y }; // the current point inside the triangle I want to texture
+
+	vec3_t weights = barycentric_weights(point_a, point_b, point_c, point_p);
+
+	float alpha = weights.x;
+	float beta = weights.y;
+	float gamma = weights.z;
+
+	// Perform the interpolation of all U and V values using barycentric weights
+	// UVs always between [0,1]
+	float interpolated_u = (u0 * alpha) + (u1 * beta) + (u2 * gamma);
+	float interpolated_v = (v0 * alpha) + (v1 * beta) + (v2 * gamma);
+
+	// Map the UV coordinate to the full texture width and height
+	// We cast to an int as we have to pick a discrete texel from the texture
+	// abs is not need, just a guard in case we ever get negative values (we shouldn't),
+	// so not to fall outside of the texture array
+	int tex_x = abs((int)(interpolated_u * texture_width));
+	int tex_y = abs((int)(interpolated_v * texture_height));
+	
+	// maybe we should test here if the values of tex_x and tex_y 
+	// are valid indices of texture_array to prevent a buffer overflow
+	draw_pixel(x, y, texture[(texture_width * tex_y) + tex_x]);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Draw a textured triangle based on a texture array of colors.
 // We split the original triangle in two, half flat-bottom and half flat-top.
 ///////////////////////////////////////////////////////////////////////////////
@@ -160,7 +248,7 @@ void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32
 //       /  \
 //      /    \
 //     /      \
-//   v1		   \
+//   v1--------\
 //     \_       \
 //        \_     \
 //           \_   \
@@ -204,6 +292,11 @@ void draw_textured_triangle(
 		float_swap(&v0, &v1);
 	}
 
+	// Create vector points after we sort the vertices
+	vec2_t point_a = { x0, y0 };
+	vec2_t point_b = { x1, y1 };
+	vec2_t point_c = { x2, y2 };
+
 	//////////////////////////////////////////////////////
 	// Render the upper part of the triangle (flat-bottom)
 	//////////////////////////////////////////////////////
@@ -229,7 +322,7 @@ void draw_textured_triangle(
 
 			for (int x = x_start; x < x_end; x++)
 			{
-				draw_pixel(x, y, (x % 2 == 0 && y % 2 == 0) ? 0xFFFF00FF : 0x00000000);
+				draw_texel(x, y, texture, point_a, point_b, point_c, u0, v0, u1, v1, u2, v2);
 			}
 		}
 	}
@@ -259,7 +352,7 @@ void draw_textured_triangle(
 
 			for (int x = x_start; x < x_end; x++)
 			{
-				draw_pixel(x, y, (x % 2 == 0 && y % 2 == 0) ? 0xFFFF00FF : 0x00000000);
+				draw_texel(x, y, texture, point_a, point_b, point_c, u0, v0, u1, v1, u2, v2);
 			}
 		}
 	}

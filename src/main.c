@@ -127,9 +127,9 @@ void update(void)
 	triangles_to_render = NULL;
 
 	// Change the mesh scale/rotation values per animation frame
-	mesh.rotation.x += 0.05;
-	//mesh.rotation.y += 0.01;
-	//mesh.rotation.z += 0.01;
+	mesh.rotation.x += 0.008;
+	mesh.rotation.y += 0.003;
+	mesh.rotation.z += 0.004;
 	//mesh.scale.x += 0.002;
 	//mesh.scale.y += 0.001;
 	//mesh.translation.x += 0.01;
@@ -255,8 +255,13 @@ void update(void)
 			projected_points[j].x *= (window_width / 2.0);
 			projected_points[j].y *= (window_height / 2.0);
 			
+			// NOTE: there is a possibility the following line is not needed on Windows
+			// I've noted that my cube texture is flipped vertically, as well as
+			// my rotations are exact opposite from what is showcased in the videos.
+			// I need to test on my Linux machine to make sure.
+			// Perhaps this is something driver/platform specific.
 			// Invert the y values to account for flipped screen y coordinate
-			projected_points[j].y *= -1;
+			//projected_points[j].y *= -1;
 			
 			// Translate the projected points to the middle of the screen
 			projected_points[j].x += (window_width / 2.0);
