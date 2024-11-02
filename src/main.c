@@ -127,9 +127,9 @@ void update(void)
 	triangles_to_render = NULL;
 
 	// Change the mesh scale/rotation values per animation frame
-	mesh.rotation.x += 0.008;
-	mesh.rotation.y += 0.003;
-	mesh.rotation.z += 0.004;
+	//mesh.rotation.x += 0.008;
+	//mesh.rotation.y += 0.003;
+	//mesh.rotation.z += 0.004;
 	//mesh.scale.x += 0.002;
 	//mesh.scale.y += 0.001;
 	//mesh.translation.x += 0.01;
@@ -261,7 +261,10 @@ void update(void)
 			// I need to test on my Linux machine to make sure.
 			// Perhaps this is something driver/platform specific.
 			// Invert the y values to account for flipped screen y coordinate
-			//projected_points[j].y *= -1;
+			
+			// Indeed needed on Linux to match output with Gustavo's,
+			// but remember to comment on Windows
+			projected_points[j].y *= -1;
 			
 			// Translate the projected points to the middle of the screen
 			projected_points[j].x += (window_width / 2.0);
