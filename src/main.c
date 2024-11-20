@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <SDL.h>
+#include "upng.h"
 #include "array.h"
 #include "display.h"
 #include "vector.h"
@@ -33,11 +34,38 @@ void setup(void)
 	// Creating an SDL texture that is used to display the color buffer
 	color_buffer_texture = SDL_CreateTexture(
 		renderer,
-		SDL_PIXELFORMAT_ARGB8888,
+		SDL_PIXELFORMAT_RGBA32, // see comment below 
 		SDL_TEXTUREACCESS_STREAMING,
 		window_width,
 		window_height
 	);
+	// SDL_PIXELFORMAT_RGBA32 was initially SDL_PIXELFORMAT_ARGB8888 when started this course
+	// This change was needed in order to display the color values from the png files correctly
+	// However why we didn't simply used SDL_PIXELFORMAT_RGBA8888 then?
+	// 
+	// According to SDL_PixelFormatEnum documentation 
+	// SDL_PIXELFORMAT_RGBA32 is an alias for
+	// SDL_PIXELFORMAT_RGBA8888 on big endian machines and for 
+	// SDL_PIXELFORMAT_ABGR8888 on little endian machines
+	// 
+	// We are on x86/amd64 so we are little endian
+	// Hence SDL_PIXELFORMAT_ABGR8888 is also a valid option for when creating the color_buffer_texture
+	// 
+	// Please note that whenever we are passing uint32 color values as hex colors (in format 0x11223344)
+	// the actual color is not in a standard format but depends on what the actual SDL_PIXELFORMAT used
+	// so for example 0xFF000000 would be black in ARGB8888 but would be full red if RGBA8888 was used instead
+	// Try changing the format used and messing with the clear color buffer value to better visualize the above.
+	// The seemingly "correct" SDL_PIXELFORMAT_RGBA8888 would result in color buffer clearing to RED each frame
+	// 
+	// As we currently only used uint hex colors in specific places with specific values
+	// (mostly black for clear color buffer, white for the default hardcoded cube and a grey for the grid)
+	// changing the pixel format to SDL_PIXELFORMAT_RGBA32, does seem to only correct the loaded png texture colors
+	// However, it does indeed change on how all uint hex colors are parsed throught the program.
+	// It just happened that the colors we used stayed the same, despite the colors changing order.
+	// Having our colors been something else like (yellow or magenta) it would be immediately visible
+	// that "something" changed when switching between different SDL_PIXELFORMAT values. 
+	// So keep that in mind when modifying such values from now on.
+	
 
 	// Initialize the perspective projection matrix
 	float fov = 3.141592 / 3.0; // fov value in radians, not degrees - 60 degrees used
@@ -46,14 +74,12 @@ void setup(void)
 	float zfar = 100.0;
 	proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
 	
-	// Manually load the hardcoded texture data from the static array
-	mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
-	texture_width = 64;
-	texture_height = 64;
-
 	// Loads the cube values in the mesh data structure
 	load_cube_mesh_data();
-	//load_obj_file_data("./assets/f22.obj");
+	//load_obj_file_data("./assets/cube.obj");
+
+	// Load the texture information from an external PNG file
+	load_png_texture_data("./assets/cube.png");
 }
 
 void process_input(void)
@@ -128,7 +154,7 @@ void update(void)
 
 	// Change the mesh scale/rotation values per animation frame
 	//mesh.rotation.x += 0.008;
-	//mesh.rotation.y += 0.003;
+	mesh.rotation.y += 0.003;
 	//mesh.rotation.z += 0.004;
 	//mesh.scale.x += 0.002;
 	//mesh.scale.y += 0.001;
@@ -382,7 +408,7 @@ void render(void)
 	array_free(triangles_to_render);
 
 	render_color_buffer();
-	clear_color_buffer(0xFF000000); // black (ARGB8888)
+	clear_color_buffer(0xFF000000); // black (ABGR8888)
 
 	SDL_RenderPresent(renderer); 
 }
