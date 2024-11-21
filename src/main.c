@@ -75,8 +75,8 @@ void setup(void)
 	proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
 	
 	// Loads the cube values in the mesh data structure
-	load_cube_mesh_data();
-	//load_obj_file_data("./assets/cube.obj");
+	//load_cube_mesh_data();
+	load_obj_file_data("./assets/cube.obj");
 
 	// Load the texture information from an external PNG file
 	load_png_texture_data("./assets/cube.png");
@@ -179,9 +179,9 @@ void update(void)
 		// to actualy get the vec3_t vertices/points of current mesh face
 		// look in the mesh_vertices array using the indices stored in current mesh face
 
-		face_vertices[0] = mesh.vertices[mesh_face.a - 1]; // indexes are stored starting from 1
-		face_vertices[1] = mesh.vertices[mesh_face.b - 1]; // in mesh_faces in mesh.c
-		face_vertices[2] = mesh.vertices[mesh_face.c - 1]; // hence the -1 part
+		face_vertices[0] = mesh.vertices[mesh_face.a];
+		face_vertices[1] = mesh.vertices[mesh_face.b];
+		face_vertices[2] = mesh.vertices[mesh_face.c];
 
 		vec4_t transformed_vertices[3];
 
@@ -195,7 +195,7 @@ void update(void)
 			// so not all mat_mul functions get calculated each loop
 			// however for the sake of closely following the course let's keep it here
 			
-			// Oder matters: First scale, then rotate, then translate
+			// Order matters: First scale, then rotate, then translate
 			// [T]*[R]*[S]*v (expression must be read from right to left)
 			mat4_t world_matrix = mat4_identity();
 			world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
@@ -290,6 +290,7 @@ void update(void)
 			
 			// Indeed needed on Linux to match output with Gustavo's,
 			// but remember to comment on Windows
+			// perhaps add an #ifdef Windows in the future
 			projected_points[j].y *= -1;
 			
 			// Translate the projected points to the middle of the screen

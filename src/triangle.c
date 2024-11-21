@@ -316,6 +316,15 @@ void draw_textured_triangle(
 		float_swap(&v0, &v1);
 	}
 
+	// Flip the V component to account for inverted UV-coordinates (V grows downwards)
+	// NOTE: also see comment on main.c (search for #ifdef Windows)
+	// inverting the V component does indeed correct the texture being flipped vertically
+	// but keeping the line on main.c on Windows results in opposite rotation direction than Gustavo's
+	// in the end both the one minus of the V components and the line on main.c should be skipped/not compiled on Windows
+	v0 = 1.0 - v0; // one minus (remember Unreal material node with the same name)
+	v1 = 1.0 - v1;
+	v2 = 1.0 - v2;
+	
 	// Create vector points and texture coords after we sort the vertices
 	vec4_t point_a = { x0, y0, z0, w0 };
 	vec4_t point_b = { x1, y1, z1, w1 };

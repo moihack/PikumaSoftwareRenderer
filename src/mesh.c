@@ -87,10 +87,12 @@ void load_obj_file_data(char* filename)
 
     char line[1024];
 
+    tex2_t* texcoords = NULL; // pointer to array of texture coordinates
+
     while (fgets(line, 1024, file))
     {
         // Info regarding .obj line format : https://en.wikipedia.org/wiki/Wavefront_.obj_file
-        // reading this will clear things up on why we compare for "v ", "f " etc.
+        // reading this will clear things up on why we compare for "v ", "vt ", "f " etc.
 
         // Vertex information
         if (strncmp(line, "v ", 2) == 0)
@@ -99,11 +101,20 @@ void load_obj_file_data(char* filename)
             sscanf(line, "v %f %f %f", &vertex.x, &vertex.y, &vertex.z);
             array_push(mesh.vertices, vertex);
         }
+
+        // Texture coordinate information
+        if (strncmp(line, "vt ", 3) == 0)
+        {
+            tex2_t texcoord;
+            sscanf(line, "vt %f %f", &texcoord.u, &texcoord.v);
+            array_push(texcoords, texcoord);
+        }
+
         // Face information
         if (strncmp(line, "f ", 2) == 0)
         {
             int vertex_indices[3];
-            int texture_indices[3]; // currently unused, but parsed anyway
+            int texture_indices[3]; // for UVs
             int normal_indices[3]; // currently unused, but parsed anyway
             
             sscanf(
@@ -112,10 +123,13 @@ void load_obj_file_data(char* filename)
                 &vertex_indices[1], &texture_indices[1], &normal_indices[1], 
                 &vertex_indices[2], &texture_indices[2], &normal_indices[2]
             );
-            face_t face = {
-                .a = vertex_indices[0],
-                .b = vertex_indices[1],
-                .c = vertex_indices[2],
+            face_t face = { // arrays in .obj file format start from 1, hence the - 1 part in both vertex and texture indices
+                .a = vertex_indices[0] - 1, // e.g. vertex_indices[0] returns an int index value, for example 5, but we actually need mesh.vertices[4]
+                .b = vertex_indices[1] - 1,
+                .c = vertex_indices[2] - 1,
+                .a_uv = texcoords[texture_indices[0] - 1], // likewise texture_indices return an int index value but we need the previous index to properly access the UVs from texcoords array
+                .b_uv = texcoords[texture_indices[1] - 1], // the reason there are 2 array [[]] symbols used for UVs is that the mesh.vertices array is actually accessed inside update in main.c 
+                .c_uv = texcoords[texture_indices[2] - 1],
                 .color = 0xFFFFFFFF // add a hardcoded white color to all models
             };
             
@@ -127,4 +141,5 @@ void load_obj_file_data(char* filename)
             array_push(mesh.faces, face);
         }
     }
+    array_free(texcoords);
 }
