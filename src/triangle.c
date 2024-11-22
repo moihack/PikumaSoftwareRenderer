@@ -247,9 +247,14 @@ void draw_texel(
 	// Map the UV coordinate to the full texture width and height
 	// We cast to an int as we have to pick a discrete texel from the texture
 	// abs is not need, just a guard in case we ever get negative values (we shouldn't),
-	// so not to fall outside of the texture array
-	int tex_x = abs((int)(interpolated_u * texture_width));
-	int tex_y = abs((int)(interpolated_v * texture_height));
+	// so not to fall outside of the texture array.
+	// Edit: actually we can fall outside of the texture array/triangle area due to imprecisions
+	// when calculating the barycentric_weights (not being betwen 0.0 and 1.0), 
+	// hence the use of the modulo (%) to wrap around the texture in case that happens.
+	// We could of course just check if our indices are valid before drawing a pixel,
+	// but this is just an alternative solution to the problem
+	int tex_x = abs((int)(interpolated_u * texture_width)) % texture_width;
+	int tex_y = abs((int)(interpolated_v * texture_height)) % texture_height;
 	
 	// maybe we should test here if the values of tex_x and tex_y 
 	// are valid indices of texture_array to prevent a buffer overflow
