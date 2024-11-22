@@ -76,10 +76,10 @@ void setup(void)
 	
 	// Loads the cube values in the mesh data structure
 	//load_cube_mesh_data();
-	load_obj_file_data("./assets/cube.obj");
+	load_obj_file_data("./assets/drone.obj");
 
 	// Load the texture information from an external PNG file
-	load_png_texture_data("./assets/cube.png");
+	load_png_texture_data("./assets/drone.png");
 }
 
 void process_input(void)
@@ -168,7 +168,7 @@ void update(void)
 	mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
 	mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
 	
-	// Loop all triangle faces of our mesh
+	// Loop all	triangle faces of our mesh
 	int num_faces = array_length(mesh.faces);
 	for (int i = 0; i < num_faces; i++)
 	{
