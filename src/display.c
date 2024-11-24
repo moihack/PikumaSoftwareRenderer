@@ -7,7 +7,8 @@
 // also check declarations in display.h for extern keyword use
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
-uint32_t* color_buffer = NULL; //pointer to first element in 1D array of 4 byte color values
+uint32_t* color_buffer = NULL;
+float* z_buffer = NULL;
 SDL_Texture* color_buffer_texture = NULL;
 int window_width = 800; // int just for code simplicity according to pikuma
 int window_height = 600;
@@ -162,6 +163,18 @@ void clear_color_buffer(uint32_t color)
 			// a single for loop could have been used instead
 			// for the time being code just follows along with the course  
 			color_buffer[(window_width * y) + x] = color;
+		}
+	}
+}
+
+void clear_z_buffer(void)
+{
+	for (int y = 0; y < window_height; y++)
+	{
+		for (int x = 0; x < window_width; x++)
+		{
+			// see clear_color_buffer above for double for loop explanation
+			z_buffer[(window_width * y) + x] = 1.0;
 		}
 	}
 }

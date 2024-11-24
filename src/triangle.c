@@ -256,9 +256,20 @@ void draw_texel(
 	int tex_x = abs((int)(interpolated_u * texture_width)) % texture_width;
 	int tex_y = abs((int)(interpolated_v * texture_height)) % texture_height;
 	
-	// maybe we should test here if the values of tex_x and tex_y 
-	// are valid indices of texture_array to prevent a buffer overflow
-	draw_pixel(x, y, texture[(texture_width * tex_y) + tex_x]);
+	// Adjust 1/w so the pixels that are closer to the camera have smaller values (our depth goes near 0.0 for near camera and 1.0 for values at infinity/far away)
+	interpolated_reciprocal_w = 1.0 - interpolated_reciprocal_w; // again one-minus node like Unreal node!
+	
+	// Only draw the pixel if the depth value is less than the one previously stored in the z-buffer.
+	// Esentially a better alternative to the naive painter's algorithm we implemented in a previous lesson.
+	if (interpolated_reciprocal_w < z_buffer[(window_width * y) + x])
+	{
+		// maybe we should test here if the values of tex_x and tex_y 
+		// are valid indices of texture_array to prevent a buffer overflow
+		draw_pixel(x, y, texture[(texture_width * tex_y) + tex_x]);
+		
+		// Update the z-buffer value with the 1/w of this current pixel
+		z_buffer[(window_width * y) + x] = interpolated_reciprocal_w;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
