@@ -12,8 +12,10 @@
 #include "texture.h"
 #include "triangle.h"
 
+#define MAX_TRIANGLES_PER_MESH 10000
 // Array of triangles that should be rendered frame by frame
-triangle_t* triangles_to_render = NULL;
+triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH];
+int num_triangles_to_render = 0;
 
 // Global variables for execution status and game loop
 vec3_t camera_position = { .x = 0, .y = 0 , .z = 0 };
@@ -77,10 +79,10 @@ void setup(void)
 	
 	// Loads the cube values in the mesh data structure
 	//load_cube_mesh_data();
-	load_obj_file_data("./assets/crab.obj");
+	load_obj_file_data("./assets/drone.obj");
 
 	// Load the texture information from an external PNG file
-	load_png_texture_data("./assets/crab.png");
+	load_png_texture_data("./assets/drone.png");
 }
 
 void process_input(void)
@@ -150,8 +152,8 @@ void update(void)
 	}
 	previous_frame_time = SDL_GetTicks();
 
-	// Initialize the array of triangles to render
-	triangles_to_render = NULL;
+	// Initialize the counter of triangles to render for the current frame
+	num_triangles_to_render = 0;
 
 	// Change the mesh scale/rotation values per animation frame
 	//mesh.rotation.x += 0.008;
@@ -331,7 +333,11 @@ void update(void)
 		};
 
 		// Save the projected triangle in the array of triangles to render
-		array_push(triangles_to_render, projected_triangle);
+		if (num_triangles_to_render < MAX_TRIANGLES_PER_MESH)
+		{
+			triangles_to_render[num_triangles_to_render] = projected_triangle;
+			num_triangles_to_render++;
+		}
 	}
 }
 
@@ -340,8 +346,7 @@ void render(void)
 	draw_grid();
 
 	//Loop all projected triangles and render them
-	int num_triangles = array_length(triangles_to_render);
-	for (int i = 0; i < num_triangles; i++)
+	for (int i = 0; i < num_triangles_to_render; i++)
 	{
 		triangle_t triangle = triangles_to_render[i];
 
@@ -387,9 +392,6 @@ void render(void)
 			draw_rect(triangle.points[2].x - 3, triangle.points[2].y - 3, 6, 6, 0xFFFFFF00);
 		}
 	}
-
-	// Clear the array of triangles to render every frame loop
-	array_free(triangles_to_render);
 
 	render_color_buffer();
 	
