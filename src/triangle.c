@@ -3,85 +3,6 @@
 #include "swap.h"
 
 ///////////////////////////////////////////////////////////////////////////////
-// Draw a filled a triangle with a flat bottom
-///////////////////////////////////////////////////////////////////////////////
-//
-//        (x0,y0)
-//          / \
-//         /   \
-//        /     \
-//       /       \
-//      /         \
-//  (x1,y1)------(x2,y2)
-//
-///////////////////////////////////////////////////////////////////////////////
-void fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
-{
-	// Find the two slopes (two triangle legs)
-	// We need to find the inverse of the slope
-	// Normal slope is Dy/Dx (y1 - y0) / (x1 - x0)
-	// but inverted slope is Dx/Dy
-	float inv_slope1 = (float)(x1 - x0) / (y1 - y0);
-	float inv_slope2 = (float)(x2 - x0) / (y2 - y0);
-
-	// Start x_start and x_end from the top vertex (x0,y0)
-	float x_start = x0;
-	float x_end = x0;
-
-	// Loop all the scanlines from top to bottom - y2 equals y1, so either one works (see comment/figure above signature)
-	for (int y = y0; y <= y2; y++)
-	{
-		// we could also use another for loop from x_start to x_end 
-		// and use draw_pixel instead, perhaps leading to faster code
-		// as the draw_line does many extra calculations apart from coloring
-		// but let's leave it with draw_line for now for cleaner code
-		draw_line(x_start, y, x_end, y, color); 
-		x_start += inv_slope1;
-		x_end += inv_slope2;		
-	}
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Draw a filled a triangle with a flat top
-///////////////////////////////////////////////////////////////////////////////
-//
-//  (x0,y0)------(x1,y1)
-//      \         /
-//       \       /
-//        \     /
-//         \   /
-//          \ /
-//        (x2,y2)
-//
-///////////////////////////////////////////////////////////////////////////////
-void fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
-{
-	// also see comments in fill_flat_bottom_triangle
-	// esentially this function is a modified copy of fill_flat_bottom_triangle
-	// where the changes are mainly in the for loop y-- instead of y++, -= instead of += etc
-	// 
-	// Find the two slopes (two triangle legs) - we still need to find the inverse slopes
-	float inv_slope1 = (float)(x2 - x0) / (y2 - y0);
-	float inv_slope2 = (float)(x2 - x1) / (y2 - y1);
-
-	// Start x_start and x_end from the bottom vertex (x2,y2)
-	float x_start = x2;
-	float x_end = x2;
-
-	// Loop all the scanlines from bottom to top - y0 equals y1, so either one works (see comment/figure above signature)
-	for (int y = y2; y >= y0; y--)
-	{
-		// we could also use another for loop from x_start to x_end 
-		// and use draw_pixel instead, perhaps leading to faster code
-		// as the draw_line does many extra calculations apart from coloring
-		// but let's leave it with draw_line for now for cleaner code
-		draw_line(x_start, y, x_end, y, color);
-		x_start -= inv_slope1;
-		x_end -= inv_slope2;
-	}
-}
-
-///////////////////////////////////////////////////////////////////////////////
 // Draw a filled triangle with the flat-top/flat-bottom method
 // We split the original triangle in two, half flat-bottom and half flat-top
 ///////////////////////////////////////////////////////////////////////////////
@@ -104,50 +25,87 @@ void fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint
 //                         (x2,y2)
 //
 ///////////////////////////////////////////////////////////////////////////////
-void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
-{
-	// We need to sort the vertices by y-coordinate ascending (y0 < y1 < y2)
-	if (y0 > y1)
-	{
-		int_swap(&y0, &y1);
-		int_swap(&x0, &x1);
-	}
-	if (y1 > y2)
-	{
-		int_swap(&y1, &y2);
-		int_swap(&x1, &x2);
-	}
-	if (y0 > y1) // not a typo since order may have changed in (y1 > y2), so we have to check (y0 > y1) again
-	{
-		int_swap(&y0, &y1);
-		int_swap(&x0, &x1);
-	}
+// This function is now a modified copy of draw_textured_triangle
+// So that filled triangles use a z buffer as well
+void draw_filled_triangle(int x0, int y0, float z0, float w0,
+    int x1, int y1, float z1, float w1,
+    int x2, int y2, float z2, float w2,
+    uint32_t color
+) {
+    // We need to sort the vertices by y-coordinate ascending (y0 < y1 < y2)
+    if (y0 > y1) {
+        int_swap(&y0, &y1);
+        int_swap(&x0, &x1);
+        float_swap(&z0, &z1);
+        float_swap(&w0, &w1);
+    }
+    if (y1 > y2) {
+        int_swap(&y1, &y2);
+        int_swap(&x1, &x2);
+        float_swap(&z1, &z2);
+        float_swap(&w1, &w2);
+    }
+    if (y0 > y1) {
+        int_swap(&y0, &y1);
+        int_swap(&x0, &x1);
+        float_swap(&z0, &z1);
+        float_swap(&w0, &w1);
+    }
 
-	// avoid "division by zero" cases inside fill_flat functions
-	// these can occur when a triangle is already (after all transformations) a flat-top or flat-bottom one
+    // Create three vector points after we sort the vertices
+    vec4_t point_a = { x0, y0, z0, w0 };
+    vec4_t point_b = { x1, y1, z1, w1 };
+    vec4_t point_c = { x2, y2, z2, w2 };
 
-	if (y1 == y2) // see figure above function signature to visualize the "division by zero" case in your head
-	{
-		// If true we simply have to draw a flat-bottom triangle
-		fill_flat_bottom_triangle(x0, y0, x1, y1, x2, y2, color);
-	}
-	else if (y0 == y1) // see figure above function signature to visualize the "division by zero" case in your head
-	{
-		// If true we simply have to draw a flat-top triangle
-		fill_flat_top_triangle(x0, y0, x1, y1, x2, y2, color);
-	}
-	else // generic case like shown in figure above function signature
-	{
-		// Calculate the new vertex (Mx, My) using triangle similarity
-		int My = y1;
-		int Mx = ((float)((x2 - x0) * (y1 - y0)) / (float)(y2 - y0)) + x0;
+    ///////////////////////////////////////////////////////
+    // Render the upper part of the triangle (flat-bottom)
+    ///////////////////////////////////////////////////////
+    float inv_slope_1 = 0;
+    float inv_slope_2 = 0;
 
-		// Draw flat-bottom triangle
-		fill_flat_bottom_triangle(x0, y0, x1, y1, Mx, My, color);
+    if (y1 - y0 != 0) inv_slope_1 = (float)(x1 - x0) / abs(y1 - y0);
+    if (y2 - y0 != 0) inv_slope_2 = (float)(x2 - x0) / abs(y2 - y0);
 
-		// Draw flat-top triangle
-		fill_flat_top_triangle(x1, y1, Mx, My, x2, y2, color);
-	}
+    if (y1 - y0 != 0) {
+        for (int y = y0; y <= y1; y++) {
+            int x_start = x1 + (y - y1) * inv_slope_1;
+            int x_end = x0 + (y - y0) * inv_slope_2;
+
+            if (x_end < x_start) {
+                int_swap(&x_start, &x_end); // swap if x_start is to the right of x_end
+            }
+
+            for (int x = x_start; x < x_end; x++) {
+                // Draw our pixel with a solid color
+                draw_triangle_pixel(x, y, color, point_a, point_b, point_c);
+            }
+        }
+    }
+
+    ///////////////////////////////////////////////////////
+    // Render the bottom part of the triangle (flat-top)
+    ///////////////////////////////////////////////////////
+    inv_slope_1 = 0;
+    inv_slope_2 = 0;
+
+    if (y2 - y1 != 0) inv_slope_1 = (float)(x2 - x1) / abs(y2 - y1);
+    if (y2 - y0 != 0) inv_slope_2 = (float)(x2 - x0) / abs(y2 - y0);
+
+    if (y2 - y1 != 0) {
+        for (int y = y1; y <= y2; y++) {
+            int x_start = x1 + (y - y1) * inv_slope_1;
+            int x_end = x0 + (y - y0) * inv_slope_2;
+
+            if (x_end < x_start) {
+                int_swap(&x_start, &x_end); // swap if x_start is to the right of x_end
+            }
+
+            for (int x = x_start; x < x_end; x++) {
+                // Draw our pixel with a solid color
+                draw_triangle_pixel(x, y, color, point_a, point_b, point_c);
+            }
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -207,8 +165,46 @@ vec3_t barycentric_weights(vec2_t a, vec2_t b, vec2_t c, vec2_t p) {
 	return weights;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Function to draw a solid pixel at position (x,y) using depth interpolation
+///////////////////////////////////////////////////////////////////////////////
+// This function is a modified copy of draw_triangle_texel to be used
+// for filling in color to non-textured triangles
+void draw_triangle_pixel(
+    int x, int y, uint32_t color,
+    vec4_t point_a, vec4_t point_b, vec4_t point_c
+) {
+    // Create three vec2 to find the interpolation
+    vec2_t p = { x, y };
+    vec2_t a = vec2_from_vec4(point_a);
+    vec2_t b = vec2_from_vec4(point_b);
+    vec2_t c = vec2_from_vec4(point_c);
+
+    // Calculate the barycentric coordinates of our point 'p' inside the triangle
+    vec3_t weights = barycentric_weights(a, b, c, p);
+
+    float alpha = weights.x;
+    float beta = weights.y;
+    float gamma = weights.z;
+    
+    // Interpolate the value of 1/w for the current pixel
+    float interpolated_reciprocal_w = (1 / point_a.w) * alpha + (1 / point_b.w) * beta + (1 / point_c.w) * gamma;
+
+    // Adjust 1/w so the pixels that are closer to the camera have smaller values
+    interpolated_reciprocal_w = 1.0 - interpolated_reciprocal_w;
+
+    // Only draw the pixel if the depth value is less than the one previously stored in the z-buffer
+    if (interpolated_reciprocal_w < z_buffer[(window_width * y) + x]) {
+        // Draw a pixel at position (x,y) with a solid color
+        draw_pixel(x, y, color);
+
+        // Update the z-buffer value with the 1/w of this current pixel
+        z_buffer[(window_width * y) + x] = interpolated_reciprocal_w;
+    }
+}
+
 // Function to draw the textured pixel at position x and y using interpolation
-void draw_texel(
+void draw_triangle_texel(
 	int x, int y, uint32_t* texture, // the pixel values I want to paint and the texture to pick the color from
 	vec4_t point_a, vec4_t point_b, vec4_t point_c, // triangle vertices 
 	tex2_t a_uv, tex2_t b_uv, tex2_t c_uv // uv coordinates for each triangle vertex
@@ -375,7 +371,7 @@ void draw_textured_triangle(
 
 			for (int x = x_start; x < x_end; x++)
 			{
-				draw_texel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv, c_uv);
+				draw_triangle_texel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv, c_uv);
 			}
 		}
 	}
@@ -405,7 +401,7 @@ void draw_textured_triangle(
 
 			for (int x = x_start; x < x_end; x++)
 			{
-				draw_texel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv, c_uv);
+				draw_triangle_texel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv, c_uv);
 			}
 		}
 	}

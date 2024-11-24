@@ -19,18 +19,31 @@ typedef struct {
 	vec4_t points[3];
 	tex2_t texcoords[3];
 	uint32_t color;
-	float avg_depth;
 } triangle_t; // stores the actual vec2 points of the triangle in the screen
 
 // Note: Pikuma has draw_triangle moved here in lesson "Texture Typedef".
 // However I do not recall moving the function here in any of the lessons.
 // For the time being I'll keep the draw_triangle function in display.h/.c
-void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
+// Again the function draw_triangle is seen at triangle.h during 
+// "Implementing a Z-Buffer for Filled Triangles" lesson, so I should probably
+// move it here as well in the near future.
 
-void draw_texel(
+void draw_filled_triangle(
+    int x0, int y0, float z0, float w0,
+    int x1, int y1, float z1, float w1,
+    int x2, int y2, float z2, float w2,
+    uint32_t color
+);
+
+void draw_triangle_texel(
 	int x, int y, uint32_t* texture, // the pixel values I want to paint and the texture to pick the color from
 	vec4_t point_a, vec4_t point_b, vec4_t point_c, // triangle vertices 
 	tex2_t a_uv, tex2_t b_uv, tex2_t c_uv // uv coordinates for each triangle vertex
+);
+
+void draw_triangle_pixel(
+    int x, int y, uint32_t color,
+    vec4_t point_a, vec4_t point_b, vec4_t point_c
 );
 
 // the w's carry the original z values
