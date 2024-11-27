@@ -84,7 +84,16 @@ void draw_pixel(int x, int y, uint32_t color)
 {
 	if (x >=0 && x < window_width && y>=0 && y < window_height) //only if valid index
 	{
-		color_buffer[(window_width * y) + x] = color;
+		if (render_method != RENDER_DEPTH)
+		{
+			color_buffer[(window_width * y) + x] = color;
+		}
+		else
+		{		    
+			uint32_t depth_color = trunc(255.0f * (1.0f - z_buffer[(window_width * y) + x]));
+			color = 0xFF000000 | (depth_color << 16) | (depth_color << 8) | depth_color; // 0xFF000000 | (B << 16) | (G << 8) | R
+			color_buffer[(window_width * y) + x] = color;
+		}
 	}
 }
 

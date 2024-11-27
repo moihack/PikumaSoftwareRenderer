@@ -195,11 +195,12 @@ void draw_triangle_pixel(
 
     // Only draw the pixel if the depth value is less than the one previously stored in the z-buffer
     if (interpolated_reciprocal_w < z_buffer[(window_width * y) + x]) {
-        // Draw a pixel at position (x,y) with a solid color
-        draw_pixel(x, y, color);
 
         // Update the z-buffer value with the 1/w of this current pixel
         z_buffer[(window_width * y) + x] = interpolated_reciprocal_w;
+		
+		// Draw a pixel at position (x,y) with a solid color
+		draw_pixel(x, y, color);
     }
 }
 

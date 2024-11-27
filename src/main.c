@@ -110,6 +110,8 @@ void process_input(void)
 				render_method = RENDER_TEXTURED;
 			if (event.key.keysym.sym == SDLK_6)
 				render_method = RENDER_TEXTURED_WIRE;
+			if (event.key.keysym.sym == SDLK_7)
+				render_method = RENDER_DEPTH;;
 			if (event.key.keysym.sym == SDLK_c)
 				cull_method = CULL_BACKFACE;
 			if (event.key.keysym.sym == SDLK_d)
@@ -156,9 +158,9 @@ void update(void)
 	num_triangles_to_render = 0;
 
 	// Change the mesh scale/rotation values per animation frame
-	//mesh.rotation.x += 0.008;
+	mesh.rotation.x += 0.008;
 	mesh.rotation.y += 0.003;
-	//mesh.rotation.z += 0.004;
+	mesh.rotation.z += 0.004;
 	//mesh.scale.x += 0.002;
 	//mesh.scale.y += 0.001;
 	//mesh.translation.x += 0.01;
@@ -351,7 +353,7 @@ void render(void)
 		triangle_t triangle = triangles_to_render[i];
 
 		// Draw filled triangle
-		if (render_method == RENDER_FILL_TRIANGLE || render_method == RENDER_FILL_TRIANGLE_WIRE)
+		if (render_method == RENDER_FILL_TRIANGLE || render_method == RENDER_FILL_TRIANGLE_WIRE || render_method == RENDER_DEPTH)
 		{
 			draw_filled_triangle(
 				triangle.points[0].x, triangle.points[0].y, triangle.points[0].z, triangle.points[0].w, // vertex A

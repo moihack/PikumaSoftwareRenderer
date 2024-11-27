@@ -37,7 +37,8 @@ enum render_method
 	RENDER_FILL_TRIANGLE,
 	RENDER_FILL_TRIANGLE_WIRE,
 	RENDER_TEXTURED,
-	RENDER_TEXTURED_WIRE
+	RENDER_TEXTURED_WIRE,
+	RENDER_DEPTH
 } extern render_method; // read extern comment below
 
 // only declaration
