@@ -9,6 +9,7 @@
 #include "mesh.h"
 #include "matrix.h"
 #include "light.h"
+#include "camera.h"
 #include "texture.h"
 #include "triangle.h"
 
@@ -18,8 +19,10 @@ triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH];
 int num_triangles_to_render = 0;
 
 // Global variables for execution status and game loop
-vec3_t camera_position = { .x = 0, .y = 0 , .z = 0 };
+
+// NOTE: pikuma suddenly has  world_matrix declared here in Coding the LookAt Function lesson
 mat4_t proj_matrix;
+mat4_t view_matrix;
 
 bool is_running = false;
 int previous_frame_time = 0;
@@ -79,10 +82,10 @@ void setup(void)
 	
 	// Loads the cube values in the mesh data structure
 	//load_cube_mesh_data();
-	load_obj_file_data("./assets/drone.obj");
+	load_obj_file_data("./assets/f22.obj");
 
 	// Load the texture information from an external PNG file
-	load_png_texture_data("./assets/drone.png");
+	load_png_texture_data("./assets/f22.png");
 }
 
 void process_input(void)
@@ -156,13 +159,23 @@ void update(void)
 	num_triangles_to_render = 0;
 
 	// Change the mesh scale/rotation values per animation frame
-	//mesh.rotation.x += 0.008;
-	mesh.rotation.y += 0.003;
-	//mesh.rotation.z += 0.004;
+	//mesh.rotation.x += 0.006;
+	//mesh.rotation.y += 0.000;
+	//mesh.rotation.z += 0.000;
 	//mesh.scale.x += 0.002;
 	//mesh.scale.y += 0.001;
 	//mesh.translation.x += 0.01;
-	mesh.translation.z = 5.0;
+	mesh.translation.z = 4.0;
+	
+	// Change the camera position per animation frame
+	camera.position.x += 0.008;
+	camera.position.y += 0.008;
+	
+	// Create the view matrix looking at a hardcoded target point
+	vec3_t target = { 0, 0, 4.0};
+	vec3_t up_direction = { 0, 1, 0 };
+	view_matrix = mat4_look_at(camera.position, target, up_direction);
+	
 	
 	// Create a scale, rotation and translation matrix that will be used to multiply the mesh vertices
 	mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
@@ -210,6 +223,9 @@ void update(void)
 			// Multiply the world matrix by the original vector
 			transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
 			
+			// Multiply the view matrix by the vector to transform the scene to camera space
+			transformed_vertex = mat4_mul_vec4(view_matrix, transformed_vertex);
+			
 			// Save transformed vertex in the array of transformed vertices
 			transformed_vertices[j] = transformed_vertex;
 		}
@@ -238,8 +254,9 @@ void update(void)
 		// face normal vector = just a perpendicular vector to a face/triangle surface
 		vec3_normalize(&normal);
 
-		// Find the vector between a point in the triangle and the camera origin
-		vec3_t camera_ray = vec3_sub(camera_position, vector_a);
+		// Find the vector between a point in the triangle and the camera (note the camera is always at the origin now due to ViewMatrix translation)
+		vec3_t origin = {0, 0, 0};
+		vec3_t camera_ray = vec3_sub(origin, vector_a);
 
 		// Calculate how aligned the camera ray is with the face normal using dot product
 		float dot_normal_camera = vec3_dot(camera_ray, normal); // order does not matter for dot product, like it does in cross product
