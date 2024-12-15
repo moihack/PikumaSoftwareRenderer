@@ -26,6 +26,7 @@ mat4_t view_matrix;
 
 bool is_running = false;
 int previous_frame_time = 0;
+float delta_time = 0;
 
 void setup(void)
 {
@@ -153,23 +154,24 @@ void update(void)
 	if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
 		SDL_Delay(time_to_wait);
 	}
+	
+	// Get a delta time factor converted to seconds (hence the /1000) to be used to update our game objects
+	delta_time = (SDL_GetTicks() - previous_frame_time) / 1000.0;
+	
 	previous_frame_time = SDL_GetTicks();
 
 	// Initialize the counter of triangles to render for the current frame
 	num_triangles_to_render = 0;
 
 	// Change the mesh scale/rotation values per animation frame
-	//mesh.rotation.x += 0.006;
-	//mesh.rotation.y += 0.000;
-	//mesh.rotation.z += 0.000;
-	//mesh.scale.x += 0.002;
-	//mesh.scale.y += 0.001;
-	//mesh.translation.x += 0.01;
-	mesh.translation.z = 4.0;
+	mesh.rotation.x += 0.5 * delta_time;
+	mesh.rotation.y += 0.5 * delta_time;
+	mesh.rotation.z += 0.5 * delta_time;
+	mesh.translation.z = 5.0;
 	
 	// Change the camera position per animation frame
-	camera.position.x += 0.008;
-	camera.position.y += 0.008;
+	camera.position.x += 0.0 * delta_time;
+	camera.position.y += 0.0 * delta_time;
 	
 	// Create the view matrix looking at a hardcoded target point
 	vec3_t target = { 0, 0, 4.0};
